@@ -3,12 +3,12 @@
 A village simulation where each villager is a local LLM (via Ollama) choosing one action per round.
 Goal: everyone alive, everyone housed, and the Town Hall built - with wealth shared fairly (Gini).
 
-    ./venv/bin/python main.py                  # 8 villagers, 30 rounds, qwen3.5:4b
-    ./venv/bin/python main.py -r 36 -n 6 --seed 3
-    ./venv/bin/python main.py -v               # also print every prompt + raw model reply
-    ./venv/bin/python main.py --mode tools     # native tool-calling instead of JSON mode (slower)
-    ./venv/bin/python main.py inspect runs/<run>/trace.jsonl --round 3 --villager Ada
-    ./venv/bin/python -m unittest discover tests   # rules + turn loop, no GPU needed
+    uv run main.py                  # 8 villagers, 30 rounds, qwen3.5:4b
+    uv run main.py -r 36 -n 6 --seed 3
+    uv run main.py -v               # also print every prompt + raw model reply
+    uv run main.py --mode tools     # native tool-calling instead of JSON mode (slower)
+    uv run main.py inspect runs/<run>/trace.jsonl --round 3 --villager Ada
+    uv run python -m unittest discover tests   # rules + turn loop, no GPU needed
 
 Each run writes `runs/<timestamp>/`: `log.txt` (the readable story) and `trace.jsonl` (per turn: full prompt,
 raw reply, parsed action, result, state, timing/token stats; plus every social/economic event at the end).
