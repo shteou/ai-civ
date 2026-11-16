@@ -8,10 +8,22 @@ Goal: everyone alive, everyone housed, and the Town Hall built - with wealth sha
     uv run main.py -v               # also print every prompt + raw model reply
     uv run main.py --mode tools     # native tool-calling instead of JSON mode (slower)
     uv run main.py inspect runs/<run>/trace.jsonl --round 3 --villager Ada
-    uv run python -m unittest discover tests   # rules + turn loop, no GPU needed
+    uv run main.py tui                         # full-screen TUI for a live run (same options as above)
+    uv run main.py tui --replay runs/<run>/trace.jsonl   # replay any saved run in the TUI (no Ollama needed)
+    uv run python -m unittest discover tests   # rules, turn loop and TUI, no GPU needed
 
 Each run writes `runs/<timestamp>/`: `log.txt` (the readable story) and `trace.jsonl` (per turn: full prompt,
 raw reply, parsed action, result, state, timing/token stats; plus every social/economic event at the end).
+
+## The TUI
+`main.py tui` shows the world map (Hills above Forest; Forest - Square - Fields in a row; the Lake under Square and
+Fields), every villager's stats, the town hall/house progress, a per-decision latency sparkline, and a live log.
+Pick a villager in the table (or press `f` to follow whoever just acted) and use the tabs:
+`1` Response (action, result, stated reason, raw model reply, recent actions) · `2` Memory (what they remembered and
+the derived hints they were given) · `3` Prompt (the exact user prompt) · `4` System prompt.
+Keys: `space` pause/resume (live pauses the simulation between turns) · `n` step one turn (replay) · `+`/`-` replay
+speed · `q` quit. A live TUI run still writes `log.txt` and `trace.jsonl`, and replays use the same code path as live
+runs, so any trace can be scrubbed through later.
 
 ## The world
 Map: **Square** (Town Hall) - **Fields**, **Lake** (food) - **Forest** (wood) - **Hills** (stone, reached via Forest).

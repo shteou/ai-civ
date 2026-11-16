@@ -18,11 +18,14 @@ _ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
 
 class Reporter:
-    def __init__(self, out_dir: Path, color: bool | None = None, verbose: bool = False):
+    def __init__(self, out_dir: Path, color: bool | None = None, verbose: bool = False, echo: bool = True):
         out_dir.mkdir(parents=True, exist_ok=True)
         self.out_dir = out_dir
         self.color = sys.stdout.isatty() if color is None else color
         self.verbose = verbose
+        self.echo = echo                  # False = don't print to stdout (a TUI owns the terminal)
+        self.listeners: list = []         # callables receiving every trace event as a plain dict
+        self.gate = None                  # optional callable run before each villager turn (pause support)
         self.trace = open(out_dir / "trace.jsonl", "w", buffering=1)
         self.log = open(out_dir / "log.txt", "w", buffering=1)
         self.mix: dict[str, Counter] = defaultdict(Counter)    # persona -> action counts
@@ -36,11 +39,15 @@ class Reporter:
         return f"\x1b[{code}m{text}\x1b[0m" if self.color else text
 
     def out(self, text: str = "") -> None:
-        print(text if self.color else _ANSI.sub("", text), flush=True)
+        if self.echo:
+            print(text if self.color else _ANSI.sub("", text), flush=True)
         self.log.write(_ANSI.sub("", text) + "\n")
 
     def event(self, kind: str, **data) -> None:
-        self.trace.write(json.dumps({"event": kind, **data}, default=str) + "\n")
+        line = json.dumps({"event": kind, **data}, default=str)
+        self.trace.write(line + "\n")
+        for fn in self.listeners:         # round-trip through JSON so live == replayed-from-trace
+            fn(json.loads(line))
 
     # -- narrative ------------------------------------------------------------------------
     def run_start(self, world: World, config: dict, system_prompt: str) -> None:
@@ -66,6 +73,7 @@ class Reporter:
         self.out(self.c(f"━━━ Round {world.round} ━━━", 1) + f" {tag}   hall {hall}   " + self.c(
             "pools " + " ".join(f"{p} {n}" for p, n in world.pools.items() if p != "Square"), 2))
         self.out(self.c(f"  map: {self._positions(world)}", 2))
+        self.event("round_start", round=world.round, winter=winter, world=world.snapshot())
 
     def turn(self, world: World, idx: int, d: Decision) -> None:
         v = world.get(d.villager)
@@ -97,7 +105,8 @@ class Reporter:
         self.event("turn", round=world.round, villager=d.villager, persona=v.persona, loc_before=d.loc_before,
                    prompt=d.prompt, raw_content=d.raw_content, tool_calls=d.tool_calls, action=d.action,
                    action_ok=d.action_ok, action_result=d.action_result, speech=d.speech,
-                   notes=d.notes, stats=s.to_dict(), state_after=world.snapshot()["villagers"][idx])
+                   notes=d.notes, stats=s.to_dict(), state_after=world.snapshot()["villagers"][idx],
+                   pools=dict(world.pools), hall=dict(world.hall))
 
     def round_end(self, world: World, notes: list[str], timing: dict) -> None:
         for n in notes:

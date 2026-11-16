@@ -23,6 +23,8 @@ def run(world: World, llm: LLM, rep: Reporter, max_rounds: int, config: dict, mo
         order = world.living()
         world.rng.shuffle(order)          # no villager gets a permanent first-mover advantage
         for v in order:
+            if rep.gate:
+                rep.gate()
             d = take_turn(world, v, llm, max_rounds, mode)
             llm_s += d.stats.wall_s
             calls.append({**d.stats.to_dict(), "ok": d.action_ok})
