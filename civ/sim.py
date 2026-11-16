@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import time
 
-from .agent import SYSTEM_PROMPT, take_turn
+from .agent import SYSTEM_PROMPT, json_addendum, take_turn
 from .llm import LLM
 from .report import Reporter
 from .world import World
 
 
 def run(world: World, llm: LLM, rep: Reporter, max_rounds: int, config: dict, mode: str = "json") -> dict:
-    rep.run_start(world, config, SYSTEM_PROMPT)
+    rep.run_start(world, config, SYSTEM_PROMPT + (json_addendum() if mode == "json" else ""))
     warmup_s = llm.warmup()
     rep.out(rep.c(f"model loaded in {warmup_s:.1f}s (one-off)", 2))
 
@@ -30,6 +30,6 @@ def run(world: World, llm: LLM, rep: Reporter, max_rounds: int, config: dict, mo
         notes = world.end_round()
         rep.round_end(world, notes, {"round_s": time.perf_counter() - t_round, "llm_s": llm_s})
         if world.done():
-            reason = "everyone has a house" if world.living() else "everyone died"
+            reason = "everyone is housed and the Town Hall is built" if world.living() else "everyone died"
             break
     return rep.summary(world, calls, time.perf_counter() - t_start, warmup_s, reason)

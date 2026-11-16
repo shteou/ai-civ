@@ -68,8 +68,8 @@ def main() -> None:
         return cmd_inspect(p.parse_args(sys.argv[2:]))
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("-m", "--model", default="qwen3.5:4b")
-    p.add_argument("-r", "--rounds", type=int, default=20)
-    p.add_argument("-n", "--villagers", type=int, default=5)
+    p.add_argument("-r", "--rounds", type=int, default=30)
+    p.add_argument("-n", "--villagers", type=int, default=8)
     p.add_argument("--mode", choices=["json", "tools"], default="json",
                    help="json = schema-constrained reply (faster); tools = native tool calling")
     p.add_argument("--seed", type=int)
